@@ -219,6 +219,11 @@ namespace RSG
 		private Exception rejectionException;
 
 		/// <summary>
+		/// Track whether a catch block or other error handler already caught an exception
+		/// </summary>
+		internal bool rejectionExceptionHandled = false;
+
+		/// <summary>
 		/// Error handlers.
 		/// </summary>
 		private List<RejectHandler> rejectHandlers;
@@ -451,9 +456,11 @@ namespace RSG
 		public void Done(Action onResolved, Action<Exception> onRejected)
 		{
 			Then(onResolved, onRejected)
-				.Catch(ex =>
-					Promise.PropagateUnhandledException(this, ex)
-				);
+				.Catch(ex => {
+					if (!rejectionExceptionHandled)  {
+						Promise.PropagateUnhandledException(this, ex);
+					}
+				});
 		}
 
 		/// <summary>
@@ -464,9 +471,11 @@ namespace RSG
 		public void Done(Action onResolved)
 		{
 			Then(onResolved)
-				.Catch(ex => 
-					Promise.PropagateUnhandledException(this, ex)
-				);
+				.Catch(ex => {
+					if (!rejectionExceptionHandled)  {
+						Promise.PropagateUnhandledException(this, ex);
+					}
+				});
 		}
 
 		/// <summary>
@@ -474,9 +483,11 @@ namespace RSG
 		/// </summary>
 		public void Done()
 		{
-			Catch(ex =>
-				Promise.PropagateUnhandledException(this, ex)
-			);
+			Catch(ex => {
+				if (!rejectionExceptionHandled)  {
+					Promise.PropagateUnhandledException(this, ex);
+				}
+			});
 		}
 
 		/// <summary>
@@ -506,6 +517,7 @@ namespace RSG
 			Action<Exception> rejectHandler = ex =>
 			{
 				onRejected(ex);
+				resultPromise.rejectionExceptionHandled = true;
 
 				resultPromise.Reject(ex);
 			};
@@ -567,6 +579,7 @@ namespace RSG
 				if (onRejected != null)
 				{
 					onRejected(ex);
+					resultPromise.rejectionExceptionHandled = true;
 				}
 
 				resultPromise.Reject(ex);
@@ -607,6 +620,7 @@ namespace RSG
 				if (onRejected != null)
 				{
 					onRejected(ex);
+					resultPromise.rejectionExceptionHandled = true;
 				}
 
 				resultPromise.Reject(ex);
@@ -640,6 +654,7 @@ namespace RSG
 				if (onRejected != null)
 				{
 					onRejected(ex);
+					resultPromise.rejectionExceptionHandled = true;
 				}
 
 				resultPromise.Reject(ex);
